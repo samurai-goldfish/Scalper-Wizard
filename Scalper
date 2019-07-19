@@ -1,0 +1,69 @@
+namespace NinjaTrader.NinjaScript.Strategies
+{
+	public class ScalperWizard : Strategy
+	{
+		private MAX MAX1;
+		private MIN MIN1;
+
+		protected override void OnStateChange()
+		{
+			if (State == State.SetDefaults)
+			{
+				Description									= @"Scalping the YM";
+				Name										= "ScalperWizard";
+				Calculate									= Calculate.OnEachTick;
+				EntriesPerDirection							= 1;
+				EntryHandling								= EntryHandling.AllEntries;
+				IsExitOnSessionCloseStrategy				= true;
+				ExitOnSessionCloseSeconds					= 30;
+				IsFillLimitOnTouch							= false;
+				MaximumBarsLookBack							= MaximumBarsLookBack.TwoHundredFiftySix;
+				OrderFillResolution							= OrderFillResolution.Standard;
+				Slippage									= 0;
+				StartBehavior								= StartBehavior.WaitUntilFlat;
+				TimeInForce									= TimeInForce.Gtc;
+				TraceOrders									= false;
+				RealtimeErrorHandling						= RealtimeErrorHandling.StopCancelClose;
+				StopTargetHandling							= StopTargetHandling.PerEntryExecution;
+				BarsRequiredToTrade							= 20;
+				// Disable this property for performance gains in Strategy Analyzer optimizations
+				// See the Help Guide for additional information
+				IsInstantiatedOnEachOptimizationIteration	= true;
+				ProfitTarget					= 1;
+				StopLoss					= 2;
+			}
+			else if (State == State.Configure)
+			{
+			}
+			else if (State == State.DataLoaded)
+			{				
+				MAX1				= MAX(Close, 14);
+				MIN1				= MIN(Close, 14);
+				SetProfitTarget("", CalculationMode.Ticks, ProfitTarget);
+				SetStopLoss("", CalculationMode.Ticks, StopLoss, false);
+			}
+		}
+
+		protected override void OnBarUpdate()
+		{
+			if (BarsInProgress != 0) 
+				return;
+
+			if (CurrentBars[0] < 20)
+				return;
+
+			 // Set 1
+       //Trying to get if the price is exceeded by the MAX of the past 20 bars then enter a long trade
+			if (CrossAbove(GetCurrentBid(0), MAX1, 1))
+			{
+				EnterLong(Convert.ToInt32(DefaultQuantity), "");
+			}
+			
+			 // Set 2
+       //Trying to get if the price is lower by the MIN of the past 20 bars then enter a short trade
+			if (CrossBelow(GetCurrentAsk(0), MIN1, 1))
+			{
+				EnterShort(Convert.ToInt32(DefaultQuantity), "");
+			}
+			
+		}
